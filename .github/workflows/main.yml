@@ -19,17 +19,23 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git git-lfs gnupg gperf imagemagick lib32ncurses5-dev lib32z1-dev m4 libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python3 python-is-python3
 
-    - name: Setup Tool Repo
+    - name: Setup Tool Repo e Inizializzazione Workspace
       run: |
         mkdir -p ~/bin
         curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
         chmod a+x ~/bin/repo
         echo "$HOME/bin" >> $GITHUB_PATH
+        
+        # Configurazione Git
+        git config --global user.name "github-actions"
+        git config --global user.email "actions@github.com"
+        
+        # Inizializzazione Repo prima di eseguire lo script
+        ~/bin/repo init -u https://github.com/LineageOS/android.git -b lineage-19.0 --git-lfs
 
     - name: Esecuzione Buildbot per W-K510 (A64B)
       run: |
-        git config --global user.name "github-actions"
-        git config --global user.email "actions@github.com"
+        export PATH="$HOME/bin:$PATH"
         bash buildbot_unified.sh treble A64B
 
     - name: Caricamento Immagine Finale (system.img)
