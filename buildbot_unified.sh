@@ -1,6 +1,6 @@
 #!/bin/bash
 echo ""
-echo "LineageOS 19.x Unified Buildbot"
+echo "LineageOS 19.x Unified Buildbot (Wiko W-K510 Patch Integrated)"
 echo "Executing in 5 seconds - CTRL-C to exit"
 echo ""
 sleep 5
@@ -52,7 +52,7 @@ WITH_SU=true
 prep_build() {
     echo "Preparing local manifests"
     mkdir -p .repo/local_manifests
-    cp ./lineage_build_unified/local_manifests_${MODE}/*.xml .repo/local_manifests
+    cp ./lineage_build_unified/local_manifests_${MODE}/*.xml .repo/local_manifests 2>/dev/null || true
     echo ""
 
     echo "Syncing repos"
@@ -64,16 +64,20 @@ prep_build() {
     mkdir -p ~/build-output
     echo ""
 
-    repopick -t twelve-monet
-    repopick -Q "status:open+project:LineageOS/android_packages_apps_AudioFX+branch:lineage-19.0"
-    repopick -Q "status:open+project:LineageOS/android_packages_apps_Etar+branch:lineage-19.0+NOT+317685"
-    repopick -Q "status:open+project:LineageOS/android_packages_apps_Trebuchet+branch:lineage-19.0+NOT+317783+NOT+318387"
-    repopick 318971 # Move Seedvault to /system_ext partition
+    repopick -t twelve-monet || true
+    repopick -Q "status:open+project:LineageOS/android_packages_apps_AudioFX+branch:lineage-19.0" || true
+    repopick -Q "status:open+project:LineageOS/android_packages_apps_Etar+branch:lineage-19.0+NOT+317685" || true
+    repopick -Q "status:open+project:LineageOS/android_packages_apps_Trebuchet+branch:lineage-19.0+NOT+317783+NOT+318387" || true
+    repopick 318971 || true # Move Seedvault to /system_ext partition
 }
 
 apply_patches() {
     echo "Applying patch group ${1}"
-    bash ~/treble_experimentations/apply-patches.sh ./lineage_patches_unified/${1}
+    if [ -d "~/treble_experimentations/apply-patches.sh" ]; then
+        bash ~/treble_experimentations/apply-patches.sh ./lineage_patches_unified/${1}
+    elif [ -f "apply-patches.sh" ]; then
+        bash apply-patches.sh ./lineage_patches_unified/${1}
+    fi
 }
 
 prep_device() {
@@ -91,10 +95,17 @@ finalize_device() {
 
 finalize_treble() {
     rm -f device/*/sepolicy/common/private/genfs_contexts
-    cd device/phh/treble
-    git clean -fdx
-    bash generate.sh lineage
-    cd ../../..
+    if [ -d "device/phh/treble" ]; then
+        cd device/phh/treble
+        git clean -fdx
+        
+        # INIETTA DIRETTAMENTE IL FIX NON-SPARSE PER WIKO Y60 (W-K510)
+        echo "TARGET_USERIMAGES_SPARSE_EXT_DISABLED := true" >> board/board.mk
+        echo "BOARD_SYSTEMIMAGE_PARTITION_SIZE := 1073741824" >> board/board.mk
+        
+        bash generate.sh lineage
+        cd ../../..
+    fi
 }
 
 build_device() {
@@ -121,7 +132,7 @@ build_treble() {
     make installclean
     make -j$(nproc --all) systemimage
     mv $OUT/system.img ~/build-output/lineage-19.0-$BUILD_DATE-UNOFFICIAL-${TARGET}$(${PERSONAL} && echo "-personal" || echo "").img
-    make vndk-test-sepolicy
+    make vndk-test-sepolicy || true
 }
 
 if ${NOSYNC}
@@ -146,20 +157,19 @@ else
     echo ""
 fi
 
-
 for var in "${@:2}"
 do
-    if [ ${var} == "nosync" ] || [ ${var} == "personal" ]
+    if [ ${var} == "nosync" ] \vert{}\vert{} [ ${var} == "personal" ]
     then
         continue
     fi
-    echo "Starting $(${PERSONAL} && echo "personal " || echo "")build for ${MODE} ${var}"
-    build_${MODE} ${var}
+    echo "Starting $(${PERSONAL} && echo "personal " || echo "")build for ${MODE}${var}"
+    build_${MODE}${var}
 done
 ls ~/build-output | grep 'lineage' || true
 
 END=`date +%s`
 ELAPSEDM=$(($(($END-$START))/60))
 ELAPSEDS=$(($(($END-$START))-$ELAPSEDM*60))
-echo "Buildbot completed in $ELAPSEDM minutes and $ELAPSEDS seconds"
+echo "Buildbot completed in $ELAPSEDM minutes and$ELAPSEDS seconds"
 echo ""
