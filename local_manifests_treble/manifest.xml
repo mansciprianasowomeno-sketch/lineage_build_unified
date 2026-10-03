@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
+  <!-- Dipendenze Base GSI Treble (phhusson) -->
   <project name="phhusson/vendor_hardware_overlay" path="vendor/hardware_overlay" remote="github" revision="pie" />
   <project name="phhusson/device_phh_treble" path="device/phh/treble" remote="github" revision="android-12.0" />
   <project name="phhusson/vendor_vndk-tests" path="vendor/vndk-tests" remote="github" revision="master" />
   <project name="phhusson/vendor_interfaces" path="vendor/interfaces" remote="github" revision="android-11.0" />
   <project name="phhusson/vendor_magisk" path="vendor/magisk" remote="github" revision="android-10.0" />
+  
   <remote name="gitlab" fetch="https://gitlab.com/" />
   <project name="davi.sh/gms-android-12" path="vendor/partner_gms" remote="gitlab" revision="master" />
+
   <remove-project name="platform/packages/apps/Gallery2" />
   <project name="LineageOS/android_packages_apps_Gallery2" path="packages/apps/Gallery2" remote="github" revision="lineage-18.1" />
+
+  <!-- Albero di Sorgenti e Vendor Specifici per Wiko Y60 (W-K510) -->
+  <project name="mansciprianasowomeno-sketch/android_device_wiko_W-K510" path="device/wiko/W-K510" remote="github" revision="lineage-19.1" />
+  <project name="mansciprianasowomeno-sketch/android_vendor_wiko_W-K510" path="vendor/wiko/W-K510" remote="github" revision="lineage-19.1" />
 </manifest>
